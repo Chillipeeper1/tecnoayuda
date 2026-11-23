@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>TecnoAyuda</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #e8eef5; margin: 0; }
+  #chat-box { max-width: 600px; margin: 30px auto; background: white; border-radius: 12px;
+              box-shadow: 0 4px 12px rgba(0,0,0,.15); overflow: hidden; }
+  header { background: #1e6fd9; color: white; padding: 16px; text-align: center; }
+  header h1 { margin: 0; font-size: 24px; }
+  header p { margin: 4px 0 0; font-size: 14px; opacity: .9; }
+  #mensajes { height: 400px; overflow-y: auto; padding: 16px; }
+  .msg { margin: 8px 0; padding: 10px 14px; border-radius: 10px; max-width: 80%; line-height: 1.4; }
+  .bot { background: #eef3fb; }
+  .usuario { background: #1e6fd9; color: white; margin-left: auto; }
+  #opciones { padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid #ddd; }
+  #opciones button { background: #eef3fb; border: 1px solid #1e6fd9; color: #1e6fd9;
+                     border-radius: 16px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  #opciones button:hover { background: #1e6fd9; color: white; }
+  #entrada { display: flex; border-top: 1px solid #ddd; }
+  #entrada input { flex: 1; padding: 14px; border: none; font-size: 15px; outline: none; }
+  #entrada button { background: #1e6fd9; color: white; border: none; padding: 0 20px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="chat-box">
+  <header>
+    <h1>💻 TecnoAyuda</h1>
+    <p>Tu asistente de soporte técnico</p>
+  </header>
+
+  <div id="mensajes"></div>
+
+  <div id="opciones">
+    <button onclick="enviar('No tengo internet')">🌐 Internet</button>
+    <button onclick="enviar('Mi computadora está lenta')">🐢 PC lenta</button>
+    <button onclick="enviar('¿Cómo instalo un programa?')">📥 Instalar programas</button>
+    <button onclick="enviar('Mantenimiento preventivo')">🧹 Mantenimiento</button>
+    <button onclick="enviar('Preguntas frecuentes')">❓ Preguntas frecuentes</button>
+  </div>
+
+  <div id="entrada">
+    <input id="texto" placeholder="Escribe tu problema..." onkeydown="if(event.key==='Enter') enviar()">
+    <button onclick="enviar()">Enviar</button>
+  </div>
+</div>
+
+<script>
+// ===== RESPUESTAS DEL CHATBOT =====
+// Cada tema tiene palabras clave y una respuesta.
+const temas = [
+  {
+    claves: ["internet", "conexion", "wifi", "red", "senal", "conecta"],
+    respuesta: `🌐 <b>Problemas de conexión a internet</b><br>
+      1. Revisa que el Wi-Fi esté activado o el cable bien conectado.<br>
+      2. Reinicia el módem: desconéctalo 30 segundos y vuelve a conectarlo.<br>
+      3. Acércate al módem si la señal es débil.<br>
+      4. Prueba en otro dispositivo: si tampoco funciona, el problema es del proveedor.<br>
+      5. En Windows usa: Configuración → Red e Internet → <i>Solucionar problemas</i>.`
+  },
+  {
+    claves: ["lenta", "lento", "tarda", "rapida", "rapido", "traba", "congela"],
+    respuesta: `🐢 <b>Computadora lenta</b><br>
+      1. Reinicia la computadora.<br>
+      2. Cierra programas que no estés usando.<br>
+      3. Abre el Administrador de tareas (Ctrl + Shift + Esc) y revisa qué consume más.<br>
+      4. Desactiva programas que inician solos (pestaña <i>Inicio</i>).<br>
+      5. Libera espacio: borra archivos temporales y desinstala lo que no uses.<br>
+      6. Pasa un antivirus por si hay virus.`
+  },
+  {
+    claves: ["instalar", "instalo", "programa", "aplicacion", "descargar", "software"],
+    respuesta: `📥 <b>Cómo instalar un programa</b><br>
+      1. Descárgalo solo de la <b>página oficial</b> o de la Microsoft Store.<br>
+      2. Abre el archivo descargado (.exe o .msi).<br>
+      3. Acepta los permisos y sigue el asistente (Siguiente → Siguiente).<br>
+      4. Fíjate en las casillas para no instalar programas extra.<br>
+      5. Al terminar, búscalo en el menú Inicio.`
+  },
+  {
+    claves: ["mantenimiento", "preventivo", "limpiar", "limpieza", "cuidar"],
+    respuesta: `🧹 <b>Mantenimiento preventivo</b><br>
+      • <b>Cada semana:</b> reinicia la computadora y borra archivos temporales.<br>
+      • <b>Cada mes:</b> instala las actualizaciones del sistema y pasa el antivirus.<br>
+      • <b>Cada 6 meses:</b> limpia el polvo de las ventilas y el teclado.<br>
+      • Haz respaldos de tus archivos importantes.<br>
+      • Usa un regulador de voltaje para proteger el equipo.`
+  },
+  {
+    claves: ["frecuentes", "faq", "preguntas", "dudas"],
+    respuesta: `❓ <b>Preguntas frecuentes</b><br>
+      <b>¿Es malo apagar sin "Apagar"?</b> Sí, puede dañar archivos. Usa siempre Inicio → Apagar.<br>
+      <b>¿Cada cuánto actualizo?</b> Cuando el sistema lo pida; las actualizaciones traen seguridad.<br>
+      <b>¿Necesito antivirus?</b> Windows ya trae Windows Defender, que es suficiente para casa.<br>
+      <b>¿Cómo hago captura de pantalla?</b> Tecla Windows + Shift + S.<br>
+      <b>¿Qué hago si se congela?</b> Ctrl + Alt + Supr y abre el Administrador de tareas.`
+  },
+  {
+    claves: ["hola", "buenas", "buenos"],
+    respuesta: "¡Hola! 👋 ¿En qué te puedo ayudar hoy?"
+  },
+  {
+    claves: ["gracias"],
+    respuesta: "¡De nada! 😊 Si tienes otro problema, aquí estoy."
+  }
+];
+
+// ===== FUNCIONES =====
+function mostrar(texto, quien) {
+  const div = document.createElement("div");
+  div.className = "msg " + quien;
+  div.innerHTML = texto;
+  const caja = document.getElementById("mensajes");
+  caja.appendChild(div);
+  caja.scrollTop = caja.scrollHeight;
+}
+
+function buscarRespuesta(pregunta) {
+  // Pasamos a minúsculas y quitamos acentos para comparar más fácil
+  const p = pregunta.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  for (const tema of temas) {
+    for (const clave of tema.claves) {
+      if (p.includes(clave)) return tema.respuesta;
+    }
+  }
+  return "🤔 No entendí tu pregunta. Prueba con: <b>internet</b>, <b>lenta</b>, <b>instalar</b>, <b>mantenimiento</b> o <b>preguntas frecuentes</b>.";
+}
+
+function enviar(textoBoton) {
+  const input = document.getElementById("texto");
+  const pregunta = textoBoton || input.value.trim();
+  if (pregunta === "") return;
+  mostrar(pregunta, "usuario");
+  input.value = "";
+  setTimeout(() => mostrar(buscarRespuesta(pregunta), "bot"), 400);
+}
+
+// Mensaje de bienvenida
+mostrar("¡Hola! Soy <b>TecnoAyuda</b> 🤖. Elige una opción de abajo o escribe tu problema.", "bot");
+</script>
+</body>
+</html>
